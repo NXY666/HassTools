@@ -1,0 +1,5 @@
+package org.nxy.hasstools.ui.permission
+
+import org.nxy.hasstools.utils.killPowerAlertPermissionGroup
+
+class KillPowerAlertGrantPermissionActivity : BaseGrantPermissionActivity(killPowerAlertPermissionGroup)

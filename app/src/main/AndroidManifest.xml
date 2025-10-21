@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"
+        tools:ignore="BackgroundLocationPolicy" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.health.WRITE_STEPS"
+        tools:ignore="HealthConnectPolicy" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:hasFragileUserData="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.HassTools">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.permission.HealthPermissionUsageActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools">
+            <!-- Permission handling for Android 14+ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.permission.LocationGrantPermissionActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.permission.StepPushGrantPermissionActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.permission.WifiGeofenceGrantPermissionActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.permission.KillPowerAlertGrantPermissionActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.wifigeofence.EditWifiGeofenceActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.wifigeofence.ManageWifiGeofenceActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.user.CreateUserActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.user.EditUserActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.network.EditNetworkActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.location.EditAmapKeyActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.HassTools" />
+
+        <activity
+            android:name=".ui.ColorTestActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="true"
+            android:theme="@style/Theme.HassTools" />
+
+        <service
+            android:name=".services.KeepAliveForegroundService"
+            android:foregroundServiceType="specialUse" />
+        <service
+            android:name=".services.GetLocationPlannedForegroundService"
+            android:foregroundServiceType="location" />
+        <service
+            android:name=".services.GetLocationManuallyForegroundService"
+            android:foregroundServiceType="location" />
+
+        <receiver
+            android:name=".services.LocationAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name=".services.LocationBootReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".StepAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name=".StepBootReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".services.NotificationListenerService"
+            android:exported="false"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <service android:name="com.amap.api.location.APSService" />
+    </application>
+
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+</manifest>
