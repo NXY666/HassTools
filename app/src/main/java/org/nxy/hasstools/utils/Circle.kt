@@ -9,11 +9,23 @@ import kotlin.math.min
 
 // ======================= 对外 API（WGS84 输入） =======================
 
-/** 1) 平均分布圆 A 与高斯圆 G 的“交集加权面积”（= 高斯密度在交集内的积分，单位=概率质量） */
+/**
+ * 计算平均分布圆 A 与高斯圆 G 的交集加权面积。
+ *
+ * 交集加权面积 = 高斯密度在交集内的积分，单位为概率质量。
+ *
+ * @param aLat 均匀圆 A 的中心纬度（WGS84，度）
+ * @param aLon 均匀圆 A 的中心经度（WGS84，度）
+ * @param aRadiusMeters 均匀圆 A 的半径（米）
+ * @param gLat 高斯圆 G 的中心纬度（μ，WGS84，度）
+ * @param gLon 高斯圆 G 的中心经度（μ，WGS84，度）
+ * @param gRadiusMeters 高斯圆 G 的半径（米）
+ * @param sigmaMeters 高斯圆 G 的标准差 σ（米），对应 68% 置信度
+ * @param absTol 积分的绝对容差，默认为 1e-9
+ * @return 交集加权面积（概率质量）
+ */
 fun intersectWeightedArea(
-    // A：均匀圆（WGS84 度 + 半径米）
     aLat: Double, aLon: Double, aRadiusMeters: Double,
-    // G：高斯圆（中心=μ，WGS84 度 + 半径米 + σ米；σ=accuracy，对应68%）
     gLat: Double, gLon: Double, gRadiusMeters: Double, sigmaMeters: Double,
     absTol: Double = 1e-9
 ): Double {
@@ -25,13 +37,26 @@ fun intersectWeightedArea(
     return intersectWeightedArea(a, g, absTol)
 }
 
-/** 2) 平均分布圆的总面积（几何面积，单位 m²） */
+/**
+ * 计算平均分布圆的总面积。
+ *
+ * @param radiusMeters 圆的半径（米）
+ * @return 圆的几何面积（平方米）
+ */
 fun uniformDiskAreaMeters(radiusMeters: Double): Double {
     require(radiusMeters >= 0)
     return Math.PI * radiusMeters * radiusMeters
 }
 
-/** 3) 高斯分布圆（中心=μ）的“总面积”（= 高斯密度在自身圆内的积分，单位=概率质量） */
+/**
+ * 计算高斯分布圆的总概率质量。
+ *
+ * 高斯分布圆的中心为 μ，总面积 = 高斯密度在自身圆内的积分。
+ *
+ * @param gaussianRadiusMeters 高斯圆的半径（米）
+ * @param sigmaMeters 高斯分布的标准差 σ（米）
+ * @return 高斯圆内的总概率质量
+ */
 fun gaussianDiskMassMeters(gaussianRadiusMeters: Double, sigmaMeters: Double): Double {
     require(gaussianRadiusMeters >= 0 && sigmaMeters > 0)
     val x = gaussianRadiusMeters * gaussianRadiusMeters / (2.0 * sigmaMeters * sigmaMeters)
@@ -43,7 +68,17 @@ fun gaussianDiskMassMeters(gaussianRadiusMeters: Double, sigmaMeters: Double): D
 private data class Circle(val cx: Double, val cy: Double, val r: Double)
 private data class GaussianDisk(val muX: Double, val muY: Double, val sigma: Double, val radius: Double)
 
-/** WGS84 小范围局部投影：以 (refLat,refLon) 为原点，返回 (x,y) 米 */
+/**
+ * WGS84 小范围局部投影。
+ *
+ * 以 (refLat, refLon) 为原点，将经纬度坐标转换为米制平面坐标。
+ *
+ * @param lat 目标点纬度（WGS84，度）
+ * @param lon 目标点经度（WGS84，度）
+ * @param refLat 参考点纬度（WGS84，度）
+ * @param refLon 参考点经度（WGS84，度）
+ * @return 相对于参考点的平面坐标 (x, y)，单位为米
+ */
 private fun toLocalMeters(lat: Double, lon: Double, refLat: Double, refLon: Double): Pair<Double, Double> {
     val R = 6378137.0
     val dLat = Math.toRadians(lat - refLat)
@@ -53,7 +88,16 @@ private fun toLocalMeters(lat: Double, lon: Double, refLat: Double, refLon: Doub
     return x to y
 }
 
-/** 高斯密度在 A∩G 的积分（G 以自身中心为原点） */
+/**
+ * 计算高斯密度在均匀圆与高斯圆交集 A∩G 内的积分。
+ *
+ * 高斯圆 G 以自身中心为原点进行计算。
+ *
+ * @param uniform 均匀分布圆
+ * @param gaussian 高斯分布圆
+ * @param absTol 积分的绝对容差
+ * @return 交集内的加权面积（概率质量）
+ */
 private fun intersectWeightedArea(uniform: Circle, gaussian: GaussianDisk, absTol: Double): Double {
     val d = hypot(uniform.cx - gaussian.muX, uniform.cy - gaussian.muY)
     val rG = gaussian.radius
@@ -84,6 +128,17 @@ private fun intersectWeightedArea(uniform: Circle, gaussian: GaussianDisk, absTo
 
 // ---------------- 自适应辛普森积分 ----------------
 
+/**
+ * 自适应辛普森积分法。
+ *
+ * 使用自适应辛普森法则计算函数在区间 [a, b] 上的定积分。
+ *
+ * @param a 积分下限
+ * @param b 积分上限
+ * @param eps 误差容限
+ * @param f 被积函数
+ * @return 积分结果
+ */
 private fun adaptiveSimpson(a: Double, b: Double, eps: Double, f: (Double) -> Double): Double {
     val fa = f(a)
     val fb = f(b)
@@ -92,6 +147,21 @@ private fun adaptiveSimpson(a: Double, b: Double, eps: Double, f: (Double) -> Do
     return asr(a, b, eps, S, fa, fb, fm, f)
 }
 
+/**
+ * 自适应辛普森递归实现。
+ *
+ * 递归地细分区间，直到满足误差要求。
+ *
+ * @param a 积分下限
+ * @param b 积分上限
+ * @param eps 误差容限
+ * @param whole 当前区间的辛普森积分值
+ * @param fa 函数在 a 点的值
+ * @param fb 函数在 b 点的值
+ * @param fm 函数在中点的值
+ * @param f 被积函数
+ * @return 积分结果
+ */
 private fun asr(a: Double, b: Double, eps: Double, whole: Double, fa: Double, fb: Double, fm: Double, f: (Double) -> Double): Double {
     val m = 0.5 * (a + b)
     val lm = 0.5 * (a + m)
@@ -105,6 +175,18 @@ private fun asr(a: Double, b: Double, eps: Double, whole: Double, fa: Double, fb
     return asr(a, m, eps / 2.0, left, fa, fm, flm, f) + asr(m, b, eps / 2.0, right, fm, fb, frm, f)
 }
 
+/**
+ * 辛普森法则计算定积分。
+ *
+ * 使用辛普森 1/3 法则计算函数在区间 [a, b] 上的定积分近似值。
+ *
+ * @param a 积分下限
+ * @param b 积分上限
+ * @param fa 函数在 a 点的值
+ * @param fb 函数在 b 点的值
+ * @param fm 函数在中点的值
+ * @return 积分近似值
+ */
 private fun simpson(a: Double, b: Double, fa: Double, fb: Double, fm: Double): Double {
     return (b - a) * (fa + 4.0 * fm + fb) / 6.0
 }

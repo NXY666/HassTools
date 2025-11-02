@@ -23,6 +23,16 @@ import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.sqrt
 
+/**
+ * 获取最后已知的位置信息。
+ *
+ * 按优先级尝试不同的位置提供者（GPS、网络、融合、被动），返回第一个可用的位置。
+ *
+ * @param context 应用上下文
+ * @param fusedProvider 融合位置提供者类型，默认为 NONE
+ * @param tryHarder 如果获取失败是否尝试获取当前位置，默认为 true
+ * @return 最后已知的位置，获取失败返回 null
+ */
 suspend fun getLastLocation(
     context: Context,
     fusedProvider: FusedProvider = FusedProvider.NONE,
@@ -80,6 +90,16 @@ suspend fun getLastLocation(
     return null
 }
 
+/**
+ * 获取当前位置信息。
+ *
+ * 主动请求位置更新，按优先级尝试不同的位置提供者（融合、网络、GPS、被动）。
+ *
+ * @param context 应用上下文
+ * @param fusedProvider 融合位置提供者类型，默认为 NONE
+ * @param tryHarder 如果获取失败是否尝试获取最后已知位置，默认为 true
+ * @return 当前位置，获取失败返回 null
+ */
 suspend fun getCurrentLocation(
     context: Context,
     fusedProvider: FusedProvider = FusedProvider.NONE,
@@ -148,20 +168,40 @@ suspend fun getCurrentLocation(
     return null
 }
 
+/**
+ * 检查指定的位置提供者是否已启用。
+ *
+ * @param provider 位置提供者名称
+ * @return 提供者是否已启用
+ */
 fun checkProviderEnabled(provider: String): Boolean {
     val locationManager = App.context.getSystemService(LocationManager::class.java)
 
     return runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)
 }
 
+/**
+ * 位置信息包装类。
+ *
+ * 包含位置对象和创建时的系统启动时间，用于计算位置更新间隔。
+ *
+ * @property location 位置对象
+ */
 class LocationInfo(
     val location: Location
 ) {
+    /** 创建时的系统启动时间（毫秒） */
     val createElapsedTime = SystemClock.elapsedRealtime()
 
+    /** 被忽略的次数 */
     var ignoreTimes = 0
 }
 
+/**
+ * 位置处理器。
+ *
+ * 负责管理位置信息、判断区域变化、更新位置等核心逻辑。
+ */
 object LocationHandler {
     private var lastLocationInfo: LocationInfo? = null
 

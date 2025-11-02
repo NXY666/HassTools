@@ -9,6 +9,17 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 
+/**
+ * Home Assistant 客户端。
+ *
+ * 用于与 Home Assistant 服务器进行通信，包括设备注册、区域查询、位置更新等功能。
+ *
+ * @property baseUrl Home Assistant 服务器的基础 URL
+ * @property token 访问令牌
+ * @property deviceId 设备 ID
+ * @property deviceName 设备名称
+ * @property webhookId Webhook ID，用于推送数据
+ */
 class HassClient(
     private val baseUrl: String,
     private var token: String? = null,
@@ -18,21 +29,43 @@ class HassClient(
 ) {
     private var cachedZones: List<Zone>? = null
 
-    // {
-    //  "device_id": "ABCDEFGH",
-    //  "app_id": "awesome_home",
-    //  "app_name": "Awesome Home",
-    //  "app_version": "1.2.0",
-    //  "device_name": "Robbies iPhone",
-    //  "manufacturer": "Apple, Inc.",
-    //  "model": "iPhone X",
-    //  "os_name": "iOS",
-    //  "os_version": "iOS 10.12",
-    //  "supports_encryption": true,
-    //  "app_data": {
-    //    "push_notification_key": "abcdef"
-    //  }
-    //}
+    /**
+     * 注册设备到 Home Assistant。
+     *
+     * 向 Home Assistant 注册移动设备，获取 webhook ID 用于后续通信。
+     *
+     * 请求示例：
+     * ```json
+     * {
+     *   "device_id": "ABCDEFGH",
+     *   "app_id": "awesome_home",
+     *   "app_name": "Awesome Home",
+     *   "app_version": "1.2.0",
+     *   "device_name": "Robbies iPhone",
+     *   "manufacturer": "Apple, Inc.",
+     *   "model": "iPhone X",
+     *   "os_name": "iOS",
+     *   "os_version": "iOS 10.12",
+     *   "supports_encryption": true,
+     *   "app_data": {
+     *     "push_notification_key": "abcdef"
+     *   }
+     * }
+     * ```
+     *
+     * 响应示例：
+     * ```json
+     * {
+     *   "cloudhook_url": "https://hooks.nabu.casa/randomlongstring123",
+     *   "remote_ui_url": "https://randomlongstring123.ui.nabu.casa",
+     *   "secret": "qwerty",
+     *   "webhook_id": "abcdefgh"
+     * }
+     * ```
+     *
+     * @param context 应用上下文
+     * @return 注册成功返回 webhook ID，失败返回 null
+     */
     fun registerDevice(context: Context): String? {
         val appId = context.packageName
         val appName = context.applicationInfo.loadLabel(context.packageManager).toString()
@@ -66,12 +99,6 @@ class HassClient(
 
             NetworkMonitor.getHttpClient().newCall(request.build()).execute().use { response ->
                 if (response.isSuccessful) {
-                    // {
-                    //  "cloudhook_url": "https://hooks.nabu.casa/randomlongstring123",
-                    //  "remote_ui_url": "https://randomlongstring123.ui.nabu.casa",
-                    //  "secret": "qwerty",
-                    //  "webhook_id": "abcdefgh"
-                    //}
                     val resJson = JSONObject(response.body.string())
 
                     // 只看webhook_id
@@ -93,10 +120,11 @@ class HassClient(
     }
 
     /**
-     * 发送Webhook请求
-     * @param body 请求体
-     * @return 响应体
-     * @throws IOException 网络请求失败
+     * 发送 Webhook 请求到 Home Assistant。
+     *
+     * @param body 请求体（JSON 字符串）
+     * @return 响应体字符串
+     * @throws IOException 网络请求失败时抛出
      */
     private fun postWebhook(body: String): String {
         val requestBody = body.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -121,9 +149,10 @@ class HassClient(
     }
 
     /**
-     * 获取配置
-     * @return 配置对象
-     * @throws IOException 网络请求失败
+     * 获取 Home Assistant 配置信息。
+     *
+     * @return 配置信息的 JSON 对象
+     * @throws IOException 网络请求失败时抛出
      */
     fun getConfig(): JSONObject {
         val getConfigBody = postWebhook(
@@ -138,34 +167,39 @@ class HassClient(
     }
 
     /**
-     * 获取区域列表
-     * @param allowCache 是否允许使用缓存。如果未显式设置，则默认允许使用缓存。
+     * 获取 Home Assistant 中定义的区域列表。
+     *
+     * 返回的 JSON 响应示例：
+     * ```json
+     * [{
+     *   "entity_id": "zone.bu_shi_shan",
+     *   "state": "0",
+     *   "attributes": {
+     *     "latitude": 0.84650876806598,
+     *     "longitude": 0.23445455170825,
+     *     "radius": 114.0,
+     *     "passive": false,
+     *     "persons": [],
+     *     "editable": true,
+     *     "icon": "mdi:map-marker",
+     *     "friendly_name": "不是山"
+     *   },
+     *   "last_changed": "2025-01-26T07:49:56.473112+00:00",
+     *   "last_reported": "2025-01-26T07:49:56.473112+00:00",
+     *   "last_updated": "2025-01-26T07:49:56.473112+00:00",
+     *   "context": {
+     *     "id": "KFC0CRAZY0THURSDAY0V0ME050",
+     *     "parent_id": null,
+     *     "user_id": null
+     *   }
+     * }]
+     * ```
+     *
+     * @param allowCache 是否允许使用缓存数据，默认为 true
      * @return 区域列表
-     * @throws IOException 网络请求失败
+     * @throws IOException 网络请求失败且无缓存时抛出
      */
     fun getZones(allowCache: Boolean = true): List<Zone> {
-        // [{
-        //	"entity_id": "zone.bu_shi_shan",
-        //	"state": "0",
-        //	"attributes": {
-        //		"latitude": 0.84650876806598,
-        //		"longitude": 0.23445455170825,
-        //		"radius": 114.0,
-        //		"passive": false,
-        //		"persons": [],
-        //		"editable": true,
-        //		"icon": "mdi:map-marker",
-        //		"friendly_name": "不是山"
-        //	},
-        //	"last_changed": "2025-01-26T07:49:56.473112+00:00",
-        //	"last_reported": "2025-01-26T07:49:56.473112+00:00",
-        //	"last_updated": "2025-01-26T07:49:56.473112+00:00",
-        //	"context": {
-        //		"id": "KFC0CRAZY0THURSDAY0V0ME050",
-        //		"parent_id": null,
-        //		"user_id": null
-        //	}
-        //}]
         try {
             val getZonesBody = postWebhook(
                 """
@@ -204,10 +238,11 @@ class HassClient(
     }
 
     /**
-     * 发送位置信息
-     * @param locationName 位置名称
-     * @param location 位置
-     * @throws IOException 网络请求失败
+     * 向 Home Assistant 发送位置信息。
+     *
+     * @param locationName 位置名称（如区域名称或 "not_home"）
+     * @param location 位置对象，包含经纬度、精度等信息
+     * @throws IOException 网络请求失败时抛出
      */
     fun postLocation(
         locationName: String,
@@ -242,28 +277,35 @@ class HassClient(
     }
 }
 
+/**
+ * Home Assistant 区域数据类。
+ *
+ * 表示 Home Assistant 中定义的地理围栏区域。
+ *
+ * @property id 区域的实体 ID
+ * @property name 区域的友好名称
+ * @property location 区域的中心点位置
+ * @property radius 区域半径（单位：米）
+ */
 data class Zone(
-    /**
-     * ID
-     */
     val id: String,
-    /**
-     * 名称
-     */
     val name: String,
-    /**
-     * 中心点
-     */
     private val location: Location,
-    /**
-     * 半径（单位：米）
-     */
     val radius: Double
 ) {
     init {
         location.provider = "zone"
     }
 
+    /**
+     * 通过经纬度和半径创建区域对象。
+     *
+     * @param id 区域的实体 ID
+     * @param name 区域的友好名称
+     * @param latitude 区域中心点纬度
+     * @param longitude 区域中心点经度
+     * @param radius 区域半径（单位：米）
+     */
     constructor(id: String, name: String, latitude: Double, longitude: Double, radius: Double) : this(
         id, name, Location("zone").apply {
             this.latitude = latitude
@@ -271,10 +313,23 @@ data class Zone(
         }, radius
     )
 
+    /**
+     * 计算到指定位置的距离。
+     *
+     * @param location 目标位置
+     * @return 距离（单位：米）
+     */
     fun distance(location: Location): Float {
         return this.location.distanceTo(location)
     }
 
+    /**
+     * 计算到指定经纬度的距离。
+     *
+     * @param lat 目标纬度
+     * @param lon 目标经度
+     * @return 距离（单位：米）
+     */
     fun distance(lat: Double, lon: Double): Float {
         return distance(Location("zone").apply {
             this.latitude = lat
@@ -282,14 +337,35 @@ data class Zone(
         })
     }
 
+    /**
+     * 判断位置是否在区域内。
+     *
+     * 考虑位置的精度，如果位置加上精度范围与区域有交集则视为在区域内。
+     *
+     * @param location 要判断的位置
+     * @return 是否在区域内
+     */
     fun contains(location: Location): Boolean {
         return distance(location) <= radius + location.accuracy
     }
 
+    /**
+     * 判断指定经纬度是否在区域内。
+     *
+     * 考虑位置的精度，如果位置加上精度范围与区域有交集则视为在区域内。
+     *
+     * @param lat 纬度
+     * @param lon 经度
+     * @param accuracy 位置精度（单位：米）
+     * @return 是否在区域内
+     */
     fun contains(lat: Double, lon: Double, accuracy: Double): Boolean {
         return distance(lat, lon) <= radius + accuracy
     }
 
+    /** 区域中心点纬度 */
     val latitude: Double get() = location.latitude
+
+    /** 区域中心点经度 */
     val longitude: Double get() = location.longitude
 }

@@ -11,6 +11,16 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import org.nxy.hasstools.R
 
+/**
+ * 显示通知。
+ *
+ * @param context 应用上下文
+ * @param id 通知 ID，默认为 1
+ * @param title 通知标题，默认为 "通知"
+ * @param text 通知内容
+ * @param isOngoing 是否为常驻通知，默认为 false
+ * @param importance 通知重要性级别，默认为 IMPORTANCE_NONE
+ */
 fun showNotification(
     context: Context,
     id: Int = 1,
@@ -50,6 +60,12 @@ fun showNotification(
     notificationManager.notify(id, notification)
 }
 
+/**
+ * 移除通知。
+ *
+ * @param context 应用上下文
+ * @param id 要移除的通知 ID，默认为 1
+ */
 fun removeNotification(context: Context, id: Int = 1) {
     val notificationManager = NotificationManagerCompat.from(context)
     notificationManager.cancel(id)

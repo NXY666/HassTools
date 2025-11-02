@@ -18,12 +18,23 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import org.nxy.hasstools.services.NotificationListenerService
 
+/**
+ * 检查电池优化是否已被忽略。
+ *
+ * @param context 应用上下文
+ * @return 是否已被添加到电池优化白名单
+ */
 private fun checkBatteryOptimization(context: Context): Boolean {
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
     return pm.isIgnoringBatteryOptimizations(packageName)
 }
 
+/**
+ * 请求忽略电池优化。
+ *
+ * @param context 应用上下文
+ */
 @SuppressLint("BatteryLife")
 private fun requestBatteryOptimization(context: Context) {
     val packageName = context.packageName
@@ -33,16 +44,33 @@ private fun requestBatteryOptimization(context: Context) {
     context.startActivity(intent)
 }
 
+/**
+ * 检查是否拥有设置精确闹钟的权限。
+ *
+ * @param context 应用上下文
+ * @return 是否有权限
+ */
 fun checkExactAlarmPermission(context: Context): Boolean {
     val alarmManager: AlarmManager = context.getSystemService(AlarmManager::class.java)
     return alarmManager.canScheduleExactAlarms()
 }
 
+/**
+ * 请求设置精确闹钟的权限。
+ *
+ * @param context 应用上下文
+ */
 fun requestExactAlarmPermission(context: Context) {
     val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
     context.startActivity(intent)
 }
 
+/**
+ * 检查是否拥有通知监听权限。
+ *
+ * @param activity Activity 实例
+ * @return 是否有权限
+ */
 private fun checkNotificationListenerPermission(activity: Activity): Boolean {
     // 检查是否已获得通知访问权限
     val enabledListeners = Settings.Secure.getString(
@@ -54,6 +82,11 @@ private fun checkNotificationListenerPermission(activity: Activity): Boolean {
     return enabledListeners.contains(activity.packageName)
 }
 
+/**
+ * 请求通知监听权限。
+ *
+ * @param context 应用上下文
+ */
 private fun requestNotificationListenerPermission(context: Context) {
     val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
     intent.putExtra(
@@ -66,6 +99,17 @@ private fun requestNotificationListenerPermission(context: Context) {
     context.startActivity(intent)
 }
 
+/**
+ * 权限项数据类。
+ *
+ * 封装了权限的检查、请求和撤销逻辑。
+ *
+ * @property permissionLabel 权限的显示名称
+ * @property permissionDesc 权限的描述信息
+ * @property permissionCheckFunction 检查权限的函数
+ * @property permissionRequestFunction 请求权限的函数
+ * @property permissionRevokedFunction 撤销权限的函数
+ */
 class PermissionItem(
     val permissionLabel: String,
     val permissionDesc: String = "",
@@ -75,6 +119,15 @@ class PermissionItem(
         Toast.makeText(context, "此权限不支持自动撤销授权", Toast.LENGTH_SHORT).show()
     },
 ) {
+    /**
+     * 通过权限名称创建权限项。
+     *
+     * 使用标准的 Android 权限检查和请求流程。
+     *
+     * @param permissionLabel 权限的显示名称
+     * @param permissionDesc 权限的描述信息
+     * @param permissionName Android 权限名称
+     */
     constructor(
         permissionLabel: String,
         permissionDesc: String = "",
@@ -99,6 +152,7 @@ class PermissionItem(
     )
 }
 
+/** 位置相关权限组 */
 val locationPermissionGroup = listOf(
     PermissionItem(
         permissionLabel = "精确位置",
@@ -136,6 +190,7 @@ val locationPermissionGroup = listOf(
     )
 )
 
+/** 步数推送相关权限组 */
 val stepPushPermissionGroup = listOf(
     PermissionItem(
         permissionLabel = "运动健康",
@@ -169,6 +224,7 @@ val stepPushPermissionGroup = listOf(
     )
 )
 
+/** Wi-Fi 地理围栏相关权限组 */
 val wifiGeofencePermissionGroup = listOf(
     PermissionItem(
         permissionLabel = "精确位置",
@@ -177,6 +233,7 @@ val wifiGeofencePermissionGroup = listOf(
     )
 )
 
+/** 高耗电警告移除相关权限组 */
 val killPowerAlertPermissionGroup = listOf(
     PermissionItem(
         permissionLabel = "通知使用权",
@@ -190,6 +247,13 @@ val killPowerAlertPermissionGroup = listOf(
     )
 )
 
+/**
+ * 检查权限组中的所有权限是否都已授予。
+ *
+ * @param context 应用上下文
+ * @param permissionGroup 权限组列表
+ * @return 是否所有权限都已授予
+ */
 fun checkGroupPermissions(context: Context, permissionGroup: List<PermissionItem>): Boolean {
     return permissionGroup.all { it.permissionCheckFunction(context) }
 }

@@ -9,11 +9,23 @@ import org.nxy.hasstools.BuildConfig
 import org.nxy.hasstools.data.AmapDataStore
 import kotlin.coroutines.resume
 
+/**
+ * 高德地图定位工具类。
+ *
+ * 封装了高德地图 SDK 的定位功能，提供位置获取和坐标转换能力。
+ */
 object AMap {
+    /** 静态 API Key（编译时配置） */
     const val STATIC_API_KEY = BuildConfig.AMAP_API_KEY
 
+    /** 是否有静态 API Key */
     val hasStaticApiKey = STATIC_API_KEY.isNotBlank()
 
+    /**
+     * 获取当前使用的 API Key。
+     *
+     * 优先使用静态 API Key，否则从运行时配置读取。
+     */
     val apiKey
         get() = if (hasStaticApiKey) {
             STATIC_API_KEY
@@ -21,6 +33,11 @@ object AMap {
             AmapDataStore().readData().runtimeApiKey
         }
 
+    /**
+     * 初始化高德地图 SDK。
+     *
+     * 更新隐私合规设置并刷新 API Key。
+     */
     fun init() {
         AMapLocationClient.updatePrivacyShow(App.context, true, true)
         AMapLocationClient.updatePrivacyAgree(App.context, true)
@@ -28,6 +45,11 @@ object AMap {
         refreshApiKey()
     }
 
+    /**
+     * 刷新高德地图 API Key。
+     *
+     * 从配置中读取并设置新的 API Key。
+     */
     fun refreshApiKey() {
         val newApiKey = apiKey
         if (newApiKey.isBlank()) {
@@ -40,6 +62,13 @@ object AMap {
         AMapLocationClient.setApiKey(newApiKey)
     }
 
+    /**
+     * 获取最后已知的位置。
+     *
+     * 从高德地图 SDK 获取最后已知位置，并转换为 WGS84 坐标系。
+     *
+     * @return 最后已知的位置，失败返回 null
+     */
     suspend fun getLastLocation(): Location? {
         val applicationContext = App.context
 
@@ -65,6 +94,14 @@ object AMap {
         }
     }
 
+    /**
+     * 获取当前位置。
+     *
+     * 主动请求高德地图 SDK 进行定位，并转换为 WGS84 坐标系。
+     * 使用高精度模式，单次定位，超时时间为 5 秒。
+     *
+     * @return 当前位置，失败返回 null
+     */
     suspend fun getCurrentLocation(): Location? {
         val applicationContext = App.context
 
