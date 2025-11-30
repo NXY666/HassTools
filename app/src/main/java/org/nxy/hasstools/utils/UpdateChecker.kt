@@ -111,7 +111,7 @@ object UpdateChecker {
         val currentVersion = getCurrentVersionName(App.context)
         
         return try {
-            val latestRelease = fetchLatestRelease() ?: return UpdateCheckResult.Error("无法获取最新版本信息")
+            val latestRelease = fetchLatestRelease() ?: return UpdateCheckResult.Error("无法获取最新版本信息。")
 
             // 移除版本号前面的 'v' 前缀（如果有的话）
             val latestVersion = latestRelease.tag_name.removePrefix("v")
@@ -133,9 +133,9 @@ object UpdateChecker {
                 UpdateCheckResult.UpToDate(currentVersion)
             }
         } catch (e: IOException) {
-            UpdateCheckResult.Error("网络错误: ${e.message}")
+            UpdateCheckResult.Error("网络错误(${e.message})。")
         } catch (e: Exception) {
-            UpdateCheckResult.Error("检查更新失败: ${e.message}")
+            UpdateCheckResult.Error("未知错误(${e.message})。")
         }
     }
     
