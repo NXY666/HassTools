@@ -146,6 +146,47 @@ object AMapLocationConverter {
     }
 
     /**
+     * 将 AMapLocation 转换为 WGS-84 坐标的 Location 对象。
+     *
+     * @param amapLocation 高德定位对象
+     * @return 转换后的 Location 对象（WGS-84 坐标系）
+     */
+    fun toWgs84Location(amapLocation: AMapLocation): Location {
+        return Location("amap").apply {
+            val realLatLng = if (amapLocation.coordType == AMapLocation.COORD_TYPE_GCJ02) {
+                gcj02ToWgs84Acc(amapLocation.latitude, amapLocation.longitude)
+            } else {
+                LatLng(amapLocation.latitude, amapLocation.longitude)
+            }
+
+            latitude = realLatLng.lat
+            longitude = realLatLng.lon
+            accuracy = amapLocation.accuracy
+
+            if (hasAltitude() && altitude != 0.0) {
+                altitude = amapLocation.altitude
+            }
+            if (hasVerticalAccuracy() && verticalAccuracyMeters != 0.0f) {
+                verticalAccuracyMeters = amapLocation.verticalAccuracyMeters
+            }
+
+            if (hasBearing() && bearing != 0.0f) {
+                bearing = amapLocation.bearing
+            }
+            if (hasBearingAccuracy() && bearingAccuracyDegrees != 0.0f) {
+                bearingAccuracyDegrees = amapLocation.bearingAccuracyDegrees
+            }
+
+            if (hasSpeed() && speed != 0.0f) {
+                speed = amapLocation.speed
+            }
+            if (hasSpeedAccuracy() && speedAccuracyMetersPerSecond != 0.0f) {
+                speedAccuracyMetersPerSecond = amapLocation.speedAccuracyMetersPerSecond
+            }
+        }
+    }
+
+    /**
      * 将 GCJ-02 坐标的 AMapLocation 转换为 WGS-84 坐标。
      *
      * @param amapLocation 高德定位对象（GCJ-02 坐标系）
