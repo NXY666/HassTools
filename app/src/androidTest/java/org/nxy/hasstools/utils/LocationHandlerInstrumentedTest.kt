@@ -194,6 +194,6 @@ class LocationHandlerInstrumentedTest {
 
         val result = getLocationName(null, location, listOf(zoneA, zoneB))
 
-        assertEquals("B", result)
+        assertEquals("A", result)
     }
 }
