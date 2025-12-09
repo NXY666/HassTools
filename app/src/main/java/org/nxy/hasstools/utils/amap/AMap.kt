@@ -1,7 +1,6 @@
 package org.nxy.hasstools.utils.amap
 
 import android.location.Location
-import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -44,35 +43,6 @@ object AMap {
         AMapLocationClient.updatePrivacyAgree(App.context, true)
 
         refreshApiKey()
-    }
-
-    private fun toLocation(amapLocation: AMapLocation): Location {
-        return Location("amap").apply {
-            latitude = amapLocation.latitude
-            longitude = amapLocation.longitude
-            accuracy = amapLocation.accuracy
-
-            if (hasAltitude() && altitude != 0.0) {
-                altitude = amapLocation.altitude
-            }
-            if (hasVerticalAccuracy() && verticalAccuracyMeters != 0.0f) {
-                verticalAccuracyMeters = amapLocation.verticalAccuracyMeters
-            }
-
-            if (hasBearing() && bearing != 0.0f) {
-                bearing = amapLocation.bearing
-            }
-            if (hasBearingAccuracy() && bearingAccuracyDegrees != 0.0f) {
-                bearingAccuracyDegrees = amapLocation.bearingAccuracyDegrees
-            }
-
-            if (hasSpeed() && speed != 0.0f) {
-                speed = amapLocation.speed
-            }
-            if (hasSpeedAccuracy() && speedAccuracyMetersPerSecond != 0.0f) {
-                speedAccuracyMetersPerSecond = amapLocation.speedAccuracyMetersPerSecond
-            }
-        }
     }
 
     /**
